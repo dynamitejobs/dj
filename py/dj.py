@@ -183,21 +183,42 @@ class DJ:
     def trial_post(self, **fields) -> dict:
         return self._request("POST", "/jobs/trial", body=fields)
 
-    def publish_job(self, job_id: str) -> dict:
-        return self._request("POST", f"/jobs/{parse.quote(job_id)}/publish", body={})
+    # ── Disabled in v1 ─────────────────────────────────────────────────
+    # publish_job + repromote_job are gated on the server by a code constant
+    # (billingEndpointsEnabled in routes/jobs.go) — calling them today returns
+    # 404. Companies post paid jobs via the dashboard's Stripe Checkout flow.
+    # Uncomment here ALONG WITH flipping the server constant when the
+    # programmatic-charge-on-file UX has had its product review.
+    #
+    # def publish_job(self, job_id: str) -> dict:
+    #     return self._request("POST", f"/jobs/{parse.quote(job_id)}/publish", body={})
+    #
+    # def repromote_job(self, job_id: str, *, days: int = 30) -> dict:
+    #     return self._request("POST", f"/jobs/{parse.quote(job_id)}/repromote", params={"days": days}, body={})
 
-    def repromote_job(self, job_id: str, *, days: int = 30) -> dict:
-        return self._request("POST", f"/jobs/{parse.quote(job_id)}/repromote", params={"days": days}, body={})
+    def update_application(
+        self,
+        application_id: str,
+        *,
+        job_id: str,
+        status: str | None = None,
+        rating: float | None = None,
+        candidate_notes_text: str | None = None,
+        candidate_notes_html: str | None = None,
+    ) -> dict:
+        """Update an application's status/rating/notes.
 
-    def update_application(self, application_id: str, *, job_id: str, status: str | None = None, rating: float | None = None, note: str | None = None) -> dict:
-        body = {}
+        Notes are a single field pair (matches the dashboard's editor):
+          candidate_notes_text — plain-text version
+          candidate_notes_html — HTML version (overwrites; not appended)
+        Pass both together when you have rich content; plain-text alone is fine.
+        """
+        body: dict = {}
         if status is not None: body["status"] = status
         if rating is not None: body["rating"] = rating
-        if note is not None: body["note"] = note
+        if candidate_notes_text is not None: body["candidateNotesText"] = candidate_notes_text
+        if candidate_notes_html is not None: body["candidateNotesHTML"] = candidate_notes_html
         return self._request("PATCH", f"/applications/{parse.quote(application_id)}", params={"jobId": job_id}, body=body)
-
-    def add_application_note(self, application_id: str, *, job_id: str, note: str) -> dict:
-        return self._request("POST", f"/applications/{parse.quote(application_id)}/notes", params={"jobId": job_id}, body={"note": note})
 
     def export_applications(self, job_id: str) -> dict:
         return self._request("POST", f"/jobs/{parse.quote(job_id)}/applications/export", body={})
@@ -336,11 +357,16 @@ def cmd_call(args: argparse.Namespace) -> int:
         elif verb == "trial-post":
             fields = json.loads(args.json_body or "{}")
             out = dj.trial_post(**fields)
-        elif verb == "publish-job": out = dj.publish_job(args.id)
-        elif verb == "repromote-job": out = dj.repromote_job(args.id, days=args.days)
+        # Disabled in v1 (paired with the commented-out methods above):
+        # elif verb == "publish-job": out = dj.publish_job(args.id)
+        # elif verb == "repromote-job": out = dj.repromote_job(args.id, days=args.days)
         elif verb == "update-application":
-            out = dj.update_application(args.id, job_id=args.job_id, status=args.status, rating=args.rating, note=args.note)
-        elif verb == "note":       out = dj.add_application_note(args.id, job_id=args.job_id, note=args.note)
+            out = dj.update_application(
+                args.id, job_id=args.job_id,
+                status=args.status, rating=args.rating,
+                candidate_notes_text=args.notes_text,
+                candidate_notes_html=args.notes_html,
+            )
         elif verb == "export-applications": out = dj.export_applications(args.job_id)
         else:
             print(f"Unknown verb: {verb}", file=sys.stderr); return 2
@@ -400,14 +426,15 @@ def build_parser() -> argparse.ArgumentParser:
     uj = sub.add_parser("update-job"); uj.add_argument("id"); uj.add_argument("json_body")
     dj_ = sub.add_parser("delete-job"); dj_.add_argument("id")
     tp = sub.add_parser("trial-post"); tp.add_argument("json_body")
-    pub = sub.add_parser("publish-job"); pub.add_argument("id")
-    rep = sub.add_parser("repromote-job"); rep.add_argument("id"); rep.add_argument("--days", type=int, default=30)
+    # Disabled in v1 (server-gated):
+    # pub = sub.add_parser("publish-job"); pub.add_argument("id")
+    # rep = sub.add_parser("repromote-job"); rep.add_argument("id"); rep.add_argument("--days", type=int, default=30)
 
     ua = sub.add_parser("update-application")
     ua.add_argument("id"); ua.add_argument("--job-id", required=True, dest="job_id")
-    ua.add_argument("--status"); ua.add_argument("--rating", type=float); ua.add_argument("--note")
-
-    n = sub.add_parser("note"); n.add_argument("id"); n.add_argument("--job-id", required=True, dest="job_id"); n.add_argument("--note", required=True)
+    ua.add_argument("--status"); ua.add_argument("--rating", type=float)
+    ua.add_argument("--notes-text", dest="notes_text", help="Plain-text candidate notes (overwrites)")
+    ua.add_argument("--notes-html", dest="notes_html", help="HTML candidate notes (overwrites)")
     ex = sub.add_parser("export-applications"); ex.add_argument("job_id")
 
     return p
