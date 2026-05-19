@@ -1,3 +1,15 @@
+# DISABLED until PyPI trusted publisher is configured.
+#
+# To enable:
+#   1. On pypi.org, add a Pending Publisher (or upload v0.0.0 first to reserve
+#      the name `dynamitejobs`):
+#        owner=dynamitejobs  repo=dj  workflow=publish.yml  environment=pypi
+#   2. Rename this file back to publish.yml
+#   3. Tag a release: `git tag v1.0.0 && git push origin v1.0.0`
+#
+# Until then, this filename ending in `.disabled` keeps GitHub Actions from
+# ever loading or running it — even on tag pushes.
+
 name: Publish to PyPI
 
 on:
