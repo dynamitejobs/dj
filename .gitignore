@@ -1,0 +1,32 @@
+# API keys — never commit
+.env
+.env.local
+.env.*.local
+.env.dj
+**/.env.dj
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.venv*
+*.egg-info/
+dist/
+build/
+
+# Node (in case any tool ships a sub-app)
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# Runtime state — written on first run, per-install local state.
+metadata/

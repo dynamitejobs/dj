@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "dj": {
+      "type": "stdio",
+      "command": ".venv/bin/python3",
+      "args": [
+        "py/dj.py",
+        "--mcp"
+      ],
+      "env": {}
+    }
+  }
+}

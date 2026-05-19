@@ -1,0 +1,3 @@
+# dj-official has zero required runtime dependencies (stdlib only).
+# Optional extras:
+#   mcp>=0.9   — for `python3 -m dynamitejobs --mcp` MCP server mode

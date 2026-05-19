@@ -1,0 +1,38 @@
+{
+  "manifest_version": "0.3",
+  "name": "dj",
+  "display_name": "DJ Company API",
+  "version": "1.0.0",
+  "description": "Read and act on your own Dynamite Jobs company data via the public Company API.",
+  "long_description": "Single-file Python client for the public DJ Company API at https://api.dynamitejobs.com. Same file runs three ways: CLI, Python library, and MCP server (--mcp flag, opt-in mcp dependency). Compatible with Claude Code, Claude Desktop, Codex CLI, Gemini CLI, Cursor, GitHub Copilot, and any other Agent Skills / MCP-compatible tool. Covers company profile (read+update), jobs (CRUD + trial + publish + repromote), applications (read + status updates + notes + filtered pile), candidates (only ones who applied to your jobs), analytics (jobs/funnel/sources), billing status, and rate-limit introspection.",
+  "author": {
+    "name": "Dynamite Jobs",
+    "url": "https://dynamitejobs.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dynamitejobs/dj"
+  },
+  "documentation": "https://dynamitejobs.com/developers/",
+  "homepage": "https://github.com/dynamitejobs/dj",
+  "keywords": [
+    "dynamitejobs",
+    "dj",
+    "ats",
+    "job-board",
+    "hiring",
+    "applicants",
+    "api",
+    "sdk",
+    "mcp"
+  ],
+  "server": {
+    "type": "python",
+    "entry_point": "py/dj.py",
+    "mcp_config": {
+      "command": "python3",
+      "args": ["py/dj.py", "--mcp"]
+    }
+  }
+}

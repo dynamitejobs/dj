@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dynamitejobs"
+version = "1.0.0"
+description = "Dynamite Jobs Company API client — jobs, applications, candidates, analytics, billing."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "Dynamite Jobs", email = "developers@dynamitejobs.com" }]
+keywords = ["dynamitejobs", "ats", "job-board", "hiring", "applicants", "api", "sdk", "mcp"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Office/Business",
+]
+dependencies = []
+
+[project.optional-dependencies]
+mcp = ["mcp>=0.9"]
+
+[project.urls]
+Homepage = "https://github.com/dynamite-jobs/dj-official"
+Documentation = "https://dynamitejobs.com/developers/"
+Source = "https://github.com/dynamite-jobs/dj-official"
+Tracker = "https://github.com/dynamite-jobs/dj-official/issues"
+OpenAPI = "https://api.dynamitejobs.com/openapi.json"
+
+[project.scripts]
+dj = "dynamitejobs.dj:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["py"]
+
+[tool.hatch.build.targets.wheel.sources]
+"py" = "dynamitejobs"
