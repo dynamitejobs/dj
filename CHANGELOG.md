@@ -14,6 +14,16 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.1] – 2026-05-20
+
+### Changed
+
+- PyPI package metadata polish — fixed `Repository` / `Homepage` URLs to point at `github.com/dynamitejobs/dj` (was `dynamite-jobs/dj-official`, which doesn't exist) so PyPI's auto-verification flags them as trusted.
+- Added `Post a Job` link to `[project.urls]` (mirrors DC's `Apply to DC` pattern) so the PyPI sidebar surfaces the product CTA. UTM-tagged for attribution.
+- Added explicit `Changelog` and `Issues` URLs.
+
+No code or API surface changes — client behavior identical to 1.0.0.
+
 ## [1.0.0] – 2026-05-20
 
 Initial public release of the Dynamite Jobs Company API client.
