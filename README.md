@@ -1,8 +1,20 @@
-# dj-official
+# Dynamite Jobs Official Client
 
-Official Python client for the [Dynamite Jobs Company API](https://api.dynamitejobs.com).
+The official Python client for the [Dynamite Jobs Company API](https://dynamitejobs.com/developers/) — post remote jobs, manage applications end-to-end, score and triage candidates, pull funnel and source analytics, check billing, and run trial posts.
 
-Single-file, zero-dependency client. Four modes: **Agent Skill**, **CLI**, **Python library**, **MCP server**.
+A single self-contained file. Zero runtime dependencies (stdlib only). Works as a CLI, a Python library, **and** a [Model Context Protocol](https://modelcontextprotocol.io) server. Compatible with Claude Code, Claude Desktop, Codex CLI, Gemini CLI, Cursor, GitHub Copilot, and every other Agent Skills / MCP-compatible tool.
+
+```
+py/dj.py    ← one file, four integration modes
+```
+
+## About Dynamite Jobs
+
+[Dynamite Jobs](https://dynamitejobs.com/?utm_medium=github&utm_source=dj-official&utm_campaign=client-repo) is **the remote-first job board for companies that hire from anywhere** — running since 2017 and grown out of the [Dynamite Circle](https://www.dynamitecircle.com/?utm_medium=github&utm_source=dj-official&utm_campaign=client-repo) founder community. Every employer on the board has been vetted as offering true work-from-anywhere roles: flexible hours, async-friendly cultures, results-based management. *"Work from home" is not the same as "work from anywhere."*
+
+- **For employers** — [post a remote job](https://dynamitejobs.com/post-a-job?utm_medium=github&utm_source=dj-official&utm_campaign=client-repo) on the board, manage applicants in the built-in ATS, repromote stalled listings, and pull analytics on where your best candidates are coming from. Need the hiring done for you? Our sister agency [Remote First Recruiting](https://remotefirstrecruiting.com/?utm_medium=github&utm_source=dj-official&utm_campaign=client-repo) runs the full search.
+- **For job seekers** — [browse vetted remote jobs](https://dynamitejobs.com/remote-jobs?utm_medium=github&utm_source=dj-official&utm_campaign=client-repo), set up [job alerts](https://dynamitejobs.com/job-alerts?utm_medium=github&utm_source=dj-official&utm_campaign=client-repo), and apply with a free candidate profile.
+- **For developers and AI agents** — this client. Read your company's data, post jobs, score and respond to applicants programmatically, and wire DJ into Claude / Codex / Cursor as a first-class MCP server.
 
 ## Install
 

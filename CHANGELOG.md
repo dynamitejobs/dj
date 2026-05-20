@@ -14,6 +14,17 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.2] – 2026-05-20
+
+### Changed
+
+- PyPI metadata polish — rewrote the short `description` and `README.md` to lead with what DJ actually is (the remote-first job board for companies that hire from anywhere) before diving into the four invocation modes. Mirrors the structure of the `dynamitecircle` PyPI page.
+- Added an "About Dynamite Jobs" section to the README with marketing copy and UTM-tagged backlinks to dynamitejobs.com, post-a-job, remote-jobs, job-alerts, and the sister recruiting agency.
+- Added sidebar links in `[project.urls]` — `Dynamite Jobs`, `Browse Remote Jobs`, `Remote First Recruiting` — to surface CTAs from the PyPI page (alongside the existing `Post a Job`).
+- Expanded `keywords` to include `remote-jobs`, `remote-work`, `remote-hiring`, `remote-first`, `dynamite-jobs`, `agent-skills` for better PyPI search discoverability.
+
+No code or API surface changes — client behavior identical to 1.0.1.
+
 ## [1.0.1] – 2026-05-20
 
 ### Changed

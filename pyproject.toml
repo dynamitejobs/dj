@@ -4,13 +4,28 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dynamitejobs"
-version = "1.0.1"
-description = "Dynamite Jobs Company API client — jobs, applications, candidates, analytics, billing."
+version = "1.0.2"
+description = "Official Python client for the public Dynamite Jobs Company API — post remote jobs, manage applications, score candidates, pull funnel analytics. CLI, library, Agent Skill, and MCP server in one file."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [{ name = "Dynamite Jobs", email = "developers@dynamitejobs.com" }]
-keywords = ["dynamitejobs", "ats", "job-board", "hiring", "applicants", "api", "sdk", "mcp"]
+keywords = [
+  "dynamitejobs",
+  "dynamite-jobs",
+  "remote-jobs",
+  "remote-work",
+  "remote-hiring",
+  "remote-first",
+  "ats",
+  "job-board",
+  "hiring",
+  "applicants",
+  "api",
+  "sdk",
+  "mcp",
+  "agent-skills",
+]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -34,7 +49,10 @@ Documentation = "https://dynamitejobs.com/developers/"
 Changelog = "https://github.com/dynamitejobs/dj/blob/main/CHANGELOG.md"
 Issues = "https://github.com/dynamitejobs/dj/issues"
 OpenAPI = "https://api.dynamitejobs.com/openapi.json"
+"Dynamite Jobs" = "https://dynamitejobs.com/?utm_medium=pypi&utm_source=dynamitejobs&utm_campaign=client-package"
 "Post a Job" = "https://dynamitejobs.com/post-a-job?utm_medium=pypi&utm_source=dynamitejobs&utm_campaign=client-package"
+"Browse Remote Jobs" = "https://dynamitejobs.com/remote-jobs?utm_medium=pypi&utm_source=dynamitejobs&utm_campaign=client-package"
+"Remote First Recruiting" = "https://remotefirstrecruiting.com/?utm_medium=pypi&utm_source=dynamitejobs&utm_campaign=client-package"
 
 [project.scripts]
 dj = "dynamitejobs.dj:main"
