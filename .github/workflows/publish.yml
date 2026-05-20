@@ -66,8 +66,10 @@ jobs:
       - name: CLI test (no API call)
         shell: bash
         run: |
-          dj help | head -5
-          dj help setup | head -3
+          # argparse-driven CLI — -h exits 0; the verb subparsers each
+          # support -h too. No `help` verb in this CLI.
+          dj -h | head -5
+          dj setup -h | head -3
 
   publish:
     name: Publish to PyPI
