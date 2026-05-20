@@ -45,7 +45,26 @@ When you change the API surface (server side), update BOTH the public client AND
 
 ## Releasing
 
-1. Bump `version` in `manifest.json`, `pyproject.toml`, and `py/dj.py` (`VERSION` constant) — all three must match.
-2. Update `CHANGELOG.md` with a row at the top.
-3. Tag: `git tag v1.x.y && git push origin v1.x.y`
-4. GitHub Actions `.github/workflows/publish.yml` publishes to PyPI via OIDC trusted publishing (no API tokens stored).
+The full release flow lives in the **server-side SOP** at
+[`plans/plans/dj-web/docs/dj-company-api-release-sop.md`](https://github.com/dynamite-ventures/dc-team/blob/main/plans/team/Simon/plans/dj-web/docs/dj-company-api-release-sop.md)
+in the Hive (dc-team repo). The short version for this repo:
+
+1. Server release shipped first — `dj.CompanyAPIVersion` is now `X.Y.Z` on `api.dynamitejobs.com`.
+2. Bump `version` in `manifest.json`, `pyproject.toml`, and `py/dj.py` (`VERSION` constant) — **all three must match** the server.
+3. Add a `## [X.Y.Z] – YYYY-MM-DD` section to `CHANGELOG.md` (Keep-a-Changelog format; the GitHub Release notes are extracted from this section by the workflow).
+4. Commit and push to `main` — CI runs `build` + `smoke-install` across ubuntu/macos/windows × Python 3.10/3.12 on every push.
+5. Tag: `git tag vX.Y.Z && git push origin vX.Y.Z` — triggers `.github/workflows/publish.yml`:
+   - re-runs build + smoke-install,
+   - publishes wheel + sdist to PyPI via **OIDC trusted publishing** (no API tokens in the repo — configured at https://pypi.org/manage/account/publishing/),
+   - auto-creates a GitHub Release with notes pulled from the matching `## [X.Y.Z]` CHANGELOG section.
+6. Verify: `https://pypi.org/project/dynamitejobs/` shows the new version; `pip install -U dynamitejobs && python -c "import dynamitejobs; print(dynamitejobs.VERSION)"` matches.
+
+Trusted publisher configuration on PyPI:
+
+| Field | Value |
+|---|---|
+| PyPI Project Name | `dynamitejobs` |
+| Owner | `dynamitejobs` |
+| Repository name | `dj` |
+| Workflow filename | `publish.yml` |
+| Environment name | `pypi` |
