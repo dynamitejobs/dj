@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dynamitejobs"
-version = "1.0.2"
+version = "1.0.3"
 description = "Official Python client for the public Dynamite Jobs Company API — post remote jobs, manage applications, score candidates, pull funnel analytics. CLI, library, Agent Skill, and MCP server in one file."
 readme = "README.md"
 license = { text = "MIT" }
@@ -27,7 +27,7 @@ keywords = [
   "agent-skills",
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",

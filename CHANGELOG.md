@@ -14,6 +14,14 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.3] – 2026-05-21
+
+### Changed
+
+- PyPI Development Status classifier flipped from `4 - Beta` to `5 - Production/Stable` so the PyPI badge matches `dynamitecircle`. The client has been stable since 1.0.0 — the Beta declaration was a leftover default from initial scaffolding.
+
+No code or API surface changes — client behavior identical to 1.0.2.
+
 ## [1.0.2] – 2026-05-20
 
 ### Changed
