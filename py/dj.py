@@ -30,7 +30,7 @@ from urllib import error, parse, request
 # ──────────────────────────────────────────────────────────────────────────────
 # Version + defaults
 
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 DEFAULT_BASE_URL = "https://api.dynamitejobs.com"
 ENV_FILE = Path.home() / ".env.dj"
 ENV_KEY = "DJ_API_KEY"
@@ -53,6 +53,11 @@ class DJError(Exception):
 class DJ:
     """Thin wrapper around the Company API HTTP surface."""
 
+    # Class-level so a single warning fires across all DJ instances in
+    # one process (CLI, MCP server, library use). Mirrors DC's
+    # _VersionTracker._warned pattern.
+    _version_warned: bool = False
+
     def __init__(self, api_key: str | None = None, base_url: str | None = None, timeout: float = 30.0):
         self.api_key = api_key or os.environ.get(ENV_KEY) or _load_env_value(ENV_KEY)
         self.base_url = (base_url or os.environ.get(ENV_BASE_URL) or _load_env_value(ENV_BASE_URL) or DEFAULT_BASE_URL).rstrip("/")
@@ -61,7 +66,6 @@ class DJ:
             raise RuntimeError(
                 f"No API key. Set {ENV_KEY} env var, pass api_key=..., or run: dj setup --api-key dj_<...>"
             )
-        self._version_warned = False
 
     # ── HTTP plumbing ──
 
@@ -98,16 +102,42 @@ class DJ:
             raise DJError(e.code, parsed, url) from None
 
     def _check_version(self, resp) -> None:
-        if self._version_warned:
+        """Compare server X-API-Version to this client's VERSION; warn once.
+
+        Rules (mirrors DC's _VersionTracker):
+        - Server major OR minor newer → warn loud, once per process.
+        - Patch difference → silent (semver patch = bug fix only).
+        - Server older than client → silent (newer client is fine).
+
+        Warning text is structured so a watching agent (Claude / Codex /
+        Cursor / Gemini CLI / GitHub Copilot) can act on it without
+        guessing — it names the upgrade commands for both `pip` and
+        `pipx` (the latter is how most agents install standalone CLI
+        tools). The PyPI page is included so the agent can verify the
+        latest version before running the upgrade.
+        """
+        if DJ._version_warned:
             return
-        srv = resp.headers.get("X-API-Version", "")
-        if srv and srv != VERSION:
-            srv_t = _semver(srv)
-            cli_t = _semver(VERSION)
-            # If server major/minor newer, warn loud. Patch difference: silent.
-            if srv_t and cli_t and srv_t[:2] > cli_t[:2]:
-                sys.stderr.write(f"[dj] Server is {srv} but client is {VERSION}. Consider: pip install --upgrade dynamitejobs\n")
-                self._version_warned = True
+        srv = resp.headers.get("X-API-Version") or resp.headers.get("x-api-version") or ""
+        if not srv or srv == VERSION:
+            return
+        srv_t = _semver(srv)
+        cli_t = _semver(VERSION)
+        if not srv_t or not cli_t:
+            return
+        if srv_t[:2] <= cli_t[:2]:
+            return  # patch-only diff or client ahead — stay silent
+        DJ._version_warned = True
+        sys.stderr.write(
+            f"\n⚠  DJ Company API has new features available "
+            f"(server {srv}, this client built for {VERSION}).\n"
+            f"   Update the client:  pip install --upgrade dynamitejobs\n"
+            f"   (or for pipx installs: pipx upgrade dynamitejobs)\n"
+            f"   Release notes:      https://pypi.org/project/dynamitejobs/\n"
+            f"\n"
+            f"   Agents: please run the upgrade above before continuing — "
+            f"newer server endpoints / params may not be wrapped in this build.\n\n"
+        )
 
     # ── Read endpoints ──
 

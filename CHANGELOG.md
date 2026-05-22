@@ -14,6 +14,16 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.4] – 2026-05-21
+
+### Changed
+
+- **Version-mismatch warning rewritten to match DC's `_VersionTracker` pattern.** When the server's `X-API-Version` reports a newer major or minor than this client, stderr now emits a multi-line, agent-friendly warning that names both `pip install --upgrade dynamitejobs` and `pipx upgrade dynamitejobs` (pipx is how most agents install standalone CLI tools), links to the PyPI release page, and explicitly tells watching agents to run the upgrade before continuing. Patch-only diffs stay silent (semver patch = bug fix).
+- `_version_warned` flag moved to **class level** so one process only emits the warning once, even across multiple `DJ()` instances (CLI + library + MCP all share). Mirrors `_VersionTracker._warned` in the DC client.
+- Header read is now case-insensitive (`X-API-Version` OR `x-api-version`).
+
+No public Python API changes — `dynamitejobs.DJ`, `DJError`, `VERSION`, `main` all identical.
+
 ## [1.0.3] – 2026-05-21
 
 ### Changed
