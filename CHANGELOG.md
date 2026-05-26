@@ -14,6 +14,12 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.5] – 2026-05-27
+
+### Changed
+
+- Version bump only to verify the DJ Company API release flow keeps the server, docs, and PyPI client on the same public semver. No public Python API changes.
+
 ## [1.0.4] – 2026-05-21
 
 ### Changed
