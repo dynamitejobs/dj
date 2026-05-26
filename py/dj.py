@@ -452,7 +452,7 @@ def build_parser() -> argparse.ArgumentParser:
         a.add_argument("--to")
 
     uc = sub.add_parser("update-company"); uc.add_argument("json_body", help="JSON object of fields to update")
-    pj = sub.add_parser("post-job", help="Create a draft job"); pj.add_argument("json_body")
+    pj = sub.add_parser("post-job", help="Create an unpublished job"); pj.add_argument("json_body")
     uj = sub.add_parser("update-job"); uj.add_argument("id"); uj.add_argument("json_body")
     dj_ = sub.add_parser("delete-job"); dj_.add_argument("id")
     tp = sub.add_parser("trial-post"); tp.add_argument("json_body")

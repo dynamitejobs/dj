@@ -21,7 +21,7 @@ Get your API key from the DJ dashboard: **Settings → API Access → Create new
 
 ### Read
 - `dj company` — your company profile (description, website, plan, team)
-- `dj jobs [--status=draft|published|expired]` — list your jobs
+- `dj jobs [--status=unpublished|pending|published|expired|finished|fulfilled|deleted|rejected]` — list your jobs (mirrors the dashboard's JobStatus; newly-created jobs are `unpublished`, not `draft`)
 - `dj job <jobID>` — one job
 - `dj applications <jobID>` — applications to one job. Mirrors the dashboard's filters + sorts:
   - Status filter (pick ONE):
@@ -42,11 +42,11 @@ Get your API key from the DJ dashboard: **Settings → API Access → Create new
 
 ### Write (require write scope on the key)
 - `dj update-company '{"description": "..."}'` — patch company fields
-- `dj post-job '{...}'` — create draft job
-- `dj update-job <jobID> '{...}'` — edit draft / restricted published fields
-- `dj delete-job <jobID>` — delete draft / unpublish published
+- `dj post-job '{...}'` — create an unpublished job
+- `dj update-job <jobID> '{...}'` — edit unpublished job / restricted published fields
+- `dj delete-job <jobID>` — delete an unpublished job / unpublish a published one
 - `dj trial-post '{...}'` — submit trial post (1 per company, awaits admin approval)
-- `dj publish-job <jobID>` — publish draft (charges card on file)
+- `dj publish-job <jobID>` — publish an unpublished job (charges card on file)
 - `dj repromote-job <jobID> --days=30` — repromote (charges card on file)
 - `dj update-application <appID> --job-id=<jid> --status=goodFit --rating=4 --note="..."` — update applicant
 - `dj note <appID> --job-id=<jid> --note="..."` — append a note
