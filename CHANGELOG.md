@@ -14,6 +14,15 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.6] – 2026-05-31
+
+### Fixed
+
+- **Removed the non-existent `rating` field from `update_application`.** The DJ dashboard's ATS only tracks status (`not-reviewed` / `good-fit` / `interested` / `declined` / `filtered`) and candidate notes — there is no 1-5 rating. Server 1.0.6 already rejects `rating` with `field_not_editable`, so calls from this client that passed `rating=…` were failing. Removed from the library method, the CLI's `update-application --rating` arg, the MCP `update_application` tool schema and dispatcher, and the manifest. Watching agents (Claude, Codex, Cursor, etc.) hitting this build will see the same surface the dashboard does.
+- The MCP `update_application` tool now also surfaces `candidate_notes_text` / `candidate_notes_html` (was previously a single non-existent `note` field), and the `status` enum is explicit so completions show the 5 valid values.
+
+Tracks server [1.0.7] which stopped persisting raw bearer tokens and fixed the stale `X-API-Version` response header (the version-mismatch warning in this client will now fire correctly when the server runs ahead).
+
 ## [1.0.5] – 2026-05-27
 
 ### Changed

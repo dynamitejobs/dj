@@ -30,7 +30,7 @@ from urllib import error, parse, request
 # ──────────────────────────────────────────────────────────────────────────────
 # Version + defaults
 
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 DEFAULT_BASE_URL = "https://api.dynamitejobs.com"
 ENV_FILE = Path.home() / ".env.dj"
 ENV_KEY = "DJ_API_KEY"
@@ -232,11 +232,14 @@ class DJ:
         *,
         job_id: str,
         status: str | None = None,
-        rating: float | None = None,
         candidate_notes_text: str | None = None,
         candidate_notes_html: str | None = None,
     ) -> dict:
-        """Update an application's status/rating/notes.
+        """Update an application's status or notes (ATS).
+
+        There is no 1-5 candidate rating in DJ — only the 5 dashboard statuses
+        (not-reviewed / good-fit / interested / declined / filtered) and the
+        candidate-notes pair below.
 
         Notes are a single field pair (matches the dashboard's editor):
           candidate_notes_text — plain-text version
@@ -245,7 +248,6 @@ class DJ:
         """
         body: dict = {}
         if status is not None: body["status"] = status
-        if rating is not None: body["rating"] = rating
         if candidate_notes_text is not None: body["candidateNotesText"] = candidate_notes_text
         if candidate_notes_html is not None: body["candidateNotesHTML"] = candidate_notes_html
         return self._request("PATCH", f"/applications/{parse.quote(application_id)}", params={"jobId": job_id}, body=body)
@@ -393,7 +395,7 @@ def cmd_call(args: argparse.Namespace) -> int:
         elif verb == "update-application":
             out = dj.update_application(
                 args.id, job_id=args.job_id,
-                status=args.status, rating=args.rating,
+                status=args.status,
                 candidate_notes_text=args.notes_text,
                 candidate_notes_html=args.notes_html,
             )
@@ -462,7 +464,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     ua = sub.add_parser("update-application")
     ua.add_argument("id"); ua.add_argument("--job-id", required=True, dest="job_id")
-    ua.add_argument("--status"); ua.add_argument("--rating", type=float)
+    ua.add_argument("--status")
     ua.add_argument("--notes-text", dest="notes_text", help="Plain-text candidate notes (overwrites)")
     ua.add_argument("--notes-html", dest="notes_html", help="HTML candidate notes (overwrites)")
     ex = sub.add_parser("export-applications"); ex.add_argument("job_id")
@@ -499,7 +501,7 @@ def run_mcp() -> int:
             Tool(name="analytics_funnel", description="Company-wide funnel", inputSchema={"type": "object", "properties": {"from": {"type": "string"}, "to": {"type": "string"}}}),
             Tool(name="billing_status", description="Card on file + plan tier", inputSchema={"type": "object", "properties": {}}),
             Tool(name="limits", description="Effective rate limits + usage", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="update_application", description="Update an application's status/rating/note", inputSchema={"type": "object", "properties": {"id": {"type": "string"}, "job_id": {"type": "string"}, "status": {"type": "string"}, "rating": {"type": "number"}, "note": {"type": "string"}}, "required": ["id", "job_id"]}),
+            Tool(name="update_application", description="Update an application's status or notes (ATS). No 'rating' field — only the 5 dashboard statuses.", inputSchema={"type": "object", "properties": {"id": {"type": "string"}, "job_id": {"type": "string"}, "status": {"type": "string", "enum": ["not-reviewed", "good-fit", "interested", "declined", "filtered"]}, "candidate_notes_text": {"type": "string"}, "candidate_notes_html": {"type": "string"}}, "required": ["id", "job_id"]}),
         ]
 
     @server.call_tool()
@@ -516,7 +518,12 @@ def run_mcp() -> int:
         elif name == "billing_status": result = dj.billing_status()
         elif name == "limits": result = dj.limits()
         elif name == "update_application":
-            result = dj.update_application(args["id"], job_id=args["job_id"], status=args.get("status"), rating=args.get("rating"), note=args.get("note"))
+            result = dj.update_application(
+                args["id"], job_id=args["job_id"],
+                status=args.get("status"),
+                candidate_notes_text=args.get("candidate_notes_text"),
+                candidate_notes_html=args.get("candidate_notes_html"),
+            )
         else:
             result = {"error": f"unknown tool {name}"}
         return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
