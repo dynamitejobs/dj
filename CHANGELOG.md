@@ -14,6 +14,16 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.8] – 2026-06-01
+
+### Changed
+
+- Version bump tracking server [1.0.8], which adds a richer OpenAPI surface (typed parameter enums, JSON schemas with `properties`/`required[]`/`enum`/`default`, named multi-example maps on requests and responses, the `x-tier-required` vendor extension, rate-limit notes appended to descriptions) and a long-form Markdown `info.description` with 8 end-to-end workflow recipes plus discoverability hints for LLM agents. The server changes are purely additive — request/response shapes are unchanged, so this client release is a no-op behavioural bump that keeps the version-mismatch warning silent.
+
+The `--mcp` schema and the CLI help still match what 1.0.6 produced. Agents reading `/openapi.json` (which the dashboard's "Developer docs" link surfaces) will now see typed enums for `status` filters, named examples for "Triage today's unreviewed applicants" / "Mark applicant as interested after interview", and the canonical `statusOrder` field on application rows so they don't hardcode an ATS-status order in their client.
+
+No public Python API changes.
+
 ## [1.0.6] – 2026-05-31
 
 ### Fixed
