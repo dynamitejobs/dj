@@ -14,6 +14,14 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.0.9] – 2026-06-02
+
+### Changed
+
+- Version bump tracking server [1.0.9], which wires up two response fields the 1.0.8 OpenAPI schema advertised but never actually populated: `candidateID` on every row of `GET /jobs/{jobID}/applications` (was `null`, now the candidate UID — same value as `application.id`, surfaced explicitly so the docs' "Triage today's applicants → fetch /candidate/{candidateID}" workflow recipe actually works), and `applicationsCount` on `GET /jobs/{jobID}` + every row of `GET /jobs` (was `null`, now read from `jobsMeta/{jid}.analytics.applications.total` — same number the dashboard shows).
+
+No public Python API changes — this is a server-side data-wiring release that brings the live response shape into line with what 1.0.8's docs promised.
+
 ## [1.0.8] – 2026-06-01
 
 ### Changed
