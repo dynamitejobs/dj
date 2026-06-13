@@ -14,6 +14,14 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.1.0] – 2026-06-13
+
+### Changed
+
+- Version bump tracking server [1.1.0], a large security-hardening + correctness release on the company-api. **No public Python API changes** (same methods, same call signatures), but the server now returns **curated field allowlists** on all read endpoints — `GET /company`, `/jobs`, `/jobs/{id}`, `/jobs/{id}/applications`, `/applications/{id}`, `/billing/status` — so responses no longer include internal/billing/audit fields or request metadata; a derived `featured` boolean replaces the internal flags object on jobs. Reads/writes you already make keep working; if you depended on an undocumented internal field it will now be absent.
+
+No client code changes — bump keeps the client in lockstep with the server `X-API-Version` so the "client behind server" warning stays quiet.
+
 ## [1.0.9] – 2026-06-02
 
 ### Changed
