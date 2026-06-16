@@ -1,10 +1,10 @@
 {
   "name": "dynamitejobs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Dynamite Jobs Company API client — jobs, applications, candidates, analytics, billing.",
   "env_required": ["DJ_API_KEY"],
   "env_optional": ["DJ_API_BASE_URL"],
-  "homepage": "https://github.com/dynamite-jobs/dj-official",
+  "homepage": "https://github.com/dynamitejobs/dj",
   "docs": "https://dynamitejobs.com/developers/",
   "openapi": "https://api.dynamitejobs.com/openapi.json"
 }

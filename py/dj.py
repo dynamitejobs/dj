@@ -37,6 +37,48 @@ ENV_KEY = "DJ_API_KEY"
 ENV_BASE_URL = "DJ_API_BASE_URL"
 
 # ──────────────────────────────────────────────────────────────────────────────
+# MCP tool annotations
+#
+# Every MCP tool carries readOnlyHint / destructiveHint / openWorldHint so
+# clients can auto-approve reads and prompt on writes. The read/write split is
+# derived from the HTTP verb each command issues (GET = read; POST/PATCH/DELETE
+# = write) and guarded by tests/test_annotations.py, which fails on drift.
+#
+# Command names here use the kebab CLI form; _tool_annotations() accepts either
+# kebab (`update-job`) or snake (`update_job`, the MCP tool form).
+#
+# `setup` is the one local-only write (persists .env.dj, no network) — kept out
+# of the network-derived set and added back by the test. `workflows` and `setup`
+# are local commands → openWorldHint False.
+_WRITE_COMMANDS = frozenset({
+    "setup",
+    "update-company",
+    "post-job", "update-job", "delete-job", "trial-post",
+    "update-application", "note", "export-applications",
+})
+# Irreversible data removal — sets destructiveHint. `delete-job` unpublishes /
+# removes a job. (No other DJ write destroys data: status/notes are editable,
+# trial-post / post-job create, export is a side-effect-free email trigger.)
+_DESTRUCTIVE_COMMANDS = frozenset({"delete-job"})
+# Purely local — no outbound network, so openWorldHint is False.
+_LOCAL_COMMANDS = frozenset({"setup", "workflows"})
+
+
+def _tool_annotations(command_name: str) -> dict:
+    """MCP annotation hints for a command (accepts snake or kebab name).
+
+    Returns a plain dict so it's unit-testable without the `mcp` package;
+    run_mcp() wraps it in mcp.types.ToolAnnotations.
+    """
+    kebab = command_name.replace("_", "-")
+    is_write = kebab in _WRITE_COMMANDS
+    return {
+        "readOnlyHint":    not is_write,
+        "destructiveHint": kebab in _DESTRUCTIVE_COMMANDS,
+        "openWorldHint":   kebab not in _LOCAL_COMMANDS,
+    }
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Core client
 
 
@@ -185,7 +227,14 @@ class DJ:
         return self._request("GET", f"/applications/{parse.quote(application_id)}", params={"jobId": job_id})
 
     def candidate(self, uid: str) -> dict:
-        return self._request("GET", f"/candidates/{parse.quote(uid)}")
+        return self._request("GET", f"/candidate/{parse.quote(uid)}")
+
+    def workflows(self) -> Any:
+        """Machine-readable list of common Company API recipes — each with a
+        goal, an ordered list of {method, path} steps, and notes. A good first
+        call for an agent new to the API. Served on the public unauthenticated
+        discovery surface (alongside `/` and `/openapi.json`)."""
+        return self._request("GET", "/workflows")
 
     def analytics_jobs(self, *, from_: str | None = None, to: str | None = None) -> dict:
         return self._request("GET", "/analytics/jobs", params={"from": from_, "to": to})
@@ -251,6 +300,26 @@ class DJ:
         if candidate_notes_text is not None: body["candidateNotesText"] = candidate_notes_text
         if candidate_notes_html is not None: body["candidateNotesHTML"] = candidate_notes_html
         return self._request("PATCH", f"/applications/{parse.quote(application_id)}", params={"jobId": job_id}, body=body)
+
+    def note(
+        self,
+        application_id: str,
+        *,
+        job_id: str,
+        candidate_notes_text: str | None = None,
+        candidate_notes_html: str | None = None,
+    ) -> dict:
+        """Convenience wrapper over update_application for notes only.
+
+        Notes overwrite (they are not appended) — pass the full desired note
+        text. Mirrors the dashboard's candidate-notes editor.
+        """
+        return self.update_application(
+            application_id,
+            job_id=job_id,
+            candidate_notes_text=candidate_notes_text,
+            candidate_notes_html=candidate_notes_html,
+        )
 
     def export_applications(self, job_id: str) -> dict:
         return self._request("POST", f"/jobs/{parse.quote(job_id)}/applications/export", body={})
@@ -349,6 +418,34 @@ def _print(obj: Any, fmt: str = "json") -> None:
     print(json.dumps(obj, default=str))
 
 
+def cmd_workflows(args: argparse.Namespace) -> int:
+    """Fetch the public /workflows discovery payload.
+
+    No API key required — /workflows is on the unauthenticated discovery
+    surface. We still construct a DJ() (it only needs a base URL) but tolerate
+    a missing key so an unfamiliar agent can discover recipes before setup.
+    """
+    base = os.environ.get(ENV_BASE_URL) or _load_env_value(ENV_BASE_URL) or DEFAULT_BASE_URL
+    try:
+        dj = DJ(api_key="discovery", base_url=base)  # key unused by /workflows
+        out = dj.workflows()
+    except DJError as e:
+        if e.status == 404:
+            print(
+                "FAIL: this server does not expose /workflows yet "
+                "(404). Use `dj help` and https://api.dynamitejobs.com/openapi.json instead.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"HTTP {e.status}: {json.dumps(e.body, default=str)}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"FAIL: {e}", file=sys.stderr)
+        return 1
+    _print(out, fmt=args.format)
+    return 0
+
+
 def cmd_call(args: argparse.Namespace) -> int:
     """Generic CLI dispatcher — maps verbs to DJ method calls."""
     try:
@@ -399,6 +496,12 @@ def cmd_call(args: argparse.Namespace) -> int:
                 candidate_notes_text=args.notes_text,
                 candidate_notes_html=args.notes_html,
             )
+        elif verb == "note":
+            out = dj.note(
+                args.id, job_id=args.job_id,
+                candidate_notes_text=args.notes_text,
+                candidate_notes_html=args.notes_html,
+            )
         elif verb == "export-applications": out = dj.export_applications(args.job_id)
         else:
             print(f"Unknown verb: {verb}", file=sys.stderr); return 2
@@ -420,6 +523,7 @@ def build_parser() -> argparse.ArgumentParser:
     setup.add_argument("--base-url", default=None)
 
     sub.add_parser("self-test", help="Verify connection")
+    sub.add_parser("workflows", help="Machine-readable API recipes (no key needed)")
     sub.add_parser("company", help="Read company profile")
     sub.add_parser("limits", help="Show effective rate limits + usage")
     sub.add_parser("billing", help="Card on file, plan tier, recent charges")
@@ -467,6 +571,12 @@ def build_parser() -> argparse.ArgumentParser:
     ua.add_argument("--status")
     ua.add_argument("--notes-text", dest="notes_text", help="Plain-text candidate notes (overwrites)")
     ua.add_argument("--notes-html", dest="notes_html", help="HTML candidate notes (overwrites)")
+
+    nt = sub.add_parser("note", help="Append/overwrite candidate notes on an application")
+    nt.add_argument("id"); nt.add_argument("--job-id", required=True, dest="job_id")
+    nt.add_argument("--notes-text", dest="notes_text", help="Plain-text candidate notes (overwrites)")
+    nt.add_argument("--notes-html", dest="notes_html", help="HTML candidate notes (overwrites)")
+
     ex = sub.add_parser("export-applications"); ex.add_argument("job_id")
 
     return p
@@ -474,65 +584,205 @@ def build_parser() -> argparse.ArgumentParser:
 
 # ──────────────────────────────────────────────────────────────────────────────
 # MCP server (stdio)
+#
+# MCP tool names mirror the verb-grouped names the hosted DJ Company API MCP
+# exposes (get_company, update_company, list_jobs, …) so a tool registered from
+# this local stdio server and one registered from the hosted endpoint look the
+# same to an agent. Each entry carries:
+#   command — the kebab CLI command name, used to derive read/write annotations
+#             (see _tool_annotations / _WRITE_COMMANDS) — the single drift guard.
+#   schema  — the MCP inputSchema.
+#   handler — (DJ, args) -> result.
+#
+# Defined at module scope (not inside run_mcp) so tests/test_annotations.py can
+# introspect the read/write split without importing the optional `mcp` package.
+
+def _mcp_tool_specs() -> dict:
+    """Return {mcp_tool_name: {"command", "description", "schema", "handler"}}.
+
+    The 17 tools the hosted DJ Company API MCP exposes. publish/repromote are
+    intentionally absent — they're server-gated in v1 (see the commented-out
+    methods on DJ).
+    """
+    _date = {"from": {"type": "string", "description": "YYYY-MM-DD"},
+             "to": {"type": "string", "description": "YYYY-MM-DD"}}
+    _status_enum = ["not-reviewed", "good-fit", "interested", "declined", "filtered"]
+    return {
+        # ── Company ──
+        "get_company": {
+            "command": "company", "description": "Read your company profile (description, website, plan, team).",
+            "schema": {"type": "object", "properties": {}},
+            "handler": lambda dj, a: dj.company(),
+        },
+        "update_company": {
+            "command": "update-company", "description": "Patch company profile fields. Pass a JSON object of fields.",
+            "schema": {"type": "object", "properties": {"fields": {"type": "object", "description": "Fields to update, e.g. {\"description\": \"...\"}"}}, "required": ["fields"]},
+            "handler": lambda dj, a: dj.update_company(**(a.get("fields") or {})),
+        },
+        # ── Jobs ──
+        "list_jobs": {
+            "command": "jobs", "description": "List your jobs (optional status filter; cursor-paginated).",
+            "schema": {"type": "object", "properties": {"status": {"type": "string", "description": "unpublished|pending|published|expired|finished|fulfilled|deleted|rejected"}, "cursor": {"type": "string"}, "limit": {"type": "integer"}}},
+            "handler": lambda dj, a: dj.jobs(status=a.get("status"), cursor=a.get("cursor"), limit=a.get("limit", 25)),
+        },
+        "get_job": {
+            "command": "job", "description": "Read one job by ID.",
+            "schema": {"type": "object", "properties": {"job_id": {"type": "string"}}, "required": ["job_id"]},
+            "handler": lambda dj, a: dj.job(a["job_id"]),
+        },
+        "create_job": {
+            "command": "post-job", "description": "Create an unpublished job. Pass a JSON object of fields.",
+            "schema": {"type": "object", "properties": {"fields": {"type": "object", "description": "Job fields (title, description, ...)"}}, "required": ["fields"]},
+            "handler": lambda dj, a: dj.create_job(**(a.get("fields") or {})),
+        },
+        "create_trial_job": {
+            "command": "trial-post", "description": "Submit a trial post (1 per company, awaits admin approval).",
+            "schema": {"type": "object", "properties": {"fields": {"type": "object", "description": "Job fields"}}, "required": ["fields"]},
+            "handler": lambda dj, a: dj.trial_post(**(a.get("fields") or {})),
+        },
+        "update_job": {
+            "command": "update-job", "description": "Edit an unpublished job / restricted published fields.",
+            "schema": {"type": "object", "properties": {"job_id": {"type": "string"}, "fields": {"type": "object"}}, "required": ["job_id", "fields"]},
+            "handler": lambda dj, a: dj.update_job(a["job_id"], **(a.get("fields") or {})),
+        },
+        "delete_job": {
+            "command": "delete-job", "description": "Delete an unpublished job / unpublish a published one.",
+            "schema": {"type": "object", "properties": {"job_id": {"type": "string"}}, "required": ["job_id"]},
+            "handler": lambda dj, a: dj.delete_job(a["job_id"]),
+        },
+        # ── Applications ──
+        "list_applications": {
+            "command": "applications", "description": "List applications for a job. Mirrors the dashboard filters/sorts.",
+            "schema": {"type": "object", "properties": {
+                "job_id": {"type": "string"}, "status": {"type": "string", "description": "CSV of statuses"},
+                "only": {"type": "string"}, "include": {"type": "string"},
+                "sort": {"type": "string", "enum": ["status", "applied_desc", "applied_asc", "salary_desc", "salary_asc"]},
+                "location": {"type": "string"}, "salary_range": {"type": "string"}, "text": {"type": "string"},
+                "cursor": {"type": "string"}, "limit": {"type": "integer"}}, "required": ["job_id"]},
+            "handler": lambda dj, a: dj.applications(
+                a["job_id"], status=a.get("status"), only=a.get("only"), include=a.get("include"),
+                sort=a.get("sort"), location=a.get("location"), salary_range=a.get("salary_range"),
+                text=a.get("text"), cursor=a.get("cursor"), limit=a.get("limit", 25)),
+        },
+        "get_application": {
+            "command": "application", "description": "Read one application + its answers (requires job_id).",
+            "schema": {"type": "object", "properties": {"application_id": {"type": "string"}, "job_id": {"type": "string"}}, "required": ["application_id", "job_id"]},
+            "handler": lambda dj, a: dj.application(a["application_id"], job_id=a["job_id"]),
+        },
+        "update_application": {
+            "command": "update-application", "description": "Update an application's status or notes (ATS). No 'rating' field — only the 5 dashboard statuses.",
+            "schema": {"type": "object", "properties": {
+                "application_id": {"type": "string"}, "job_id": {"type": "string"},
+                "status": {"type": "string", "enum": _status_enum},
+                "candidate_notes_text": {"type": "string"}, "candidate_notes_html": {"type": "string"}},
+                "required": ["application_id", "job_id"]},
+            "handler": lambda dj, a: dj.update_application(
+                a["application_id"], job_id=a["job_id"], status=a.get("status"),
+                candidate_notes_text=a.get("candidate_notes_text"),
+                candidate_notes_html=a.get("candidate_notes_html")),
+        },
+        "export_applications": {
+            "command": "export-applications", "description": "Trigger a CSV export of a job's applications to email.",
+            "schema": {"type": "object", "properties": {"job_id": {"type": "string"}}, "required": ["job_id"]},
+            "handler": lambda dj, a: dj.export_applications(a["job_id"]),
+        },
+        # ── Candidates ──
+        "get_candidate": {
+            "command": "candidate", "description": "Read a candidate profile (only if they applied to one of your jobs).",
+            "schema": {"type": "object", "properties": {"uid": {"type": "string"}}, "required": ["uid"]},
+            "handler": lambda dj, a: dj.candidate(a["uid"]),
+        },
+        # ── Analytics ──
+        "analytics_jobs": {
+            "command": "analytics-jobs", "description": "Per-job analytics (views, applies, …).",
+            "schema": {"type": "object", "properties": dict(_date)},
+            "handler": lambda dj, a: dj.analytics_jobs(from_=a.get("from"), to=a.get("to")),
+        },
+        "analytics_funnel": {
+            "command": "analytics-funnel", "description": "Company-wide funnel: views → applies → reviewed → hired.",
+            "schema": {"type": "object", "properties": dict(_date)},
+            "handler": lambda dj, a: dj.analytics_funnel(from_=a.get("from"), to=a.get("to")),
+        },
+        # ── Billing / limits ──
+        "billing_status": {
+            "command": "billing", "description": "Card on file, plan tier, recent API charges.",
+            "schema": {"type": "object", "properties": {}},
+            "handler": lambda dj, a: dj.billing_status(),
+        },
+        "get_limits": {
+            "command": "limits", "description": "Effective rate limits + current usage.",
+            "schema": {"type": "object", "properties": {}},
+            "handler": lambda dj, a: dj.limits(),
+        },
+    }
 
 
 def run_mcp() -> int:
-    """Tiny MCP stdio server. Exposes a tool per verb."""
+    """MCP stdio server. Exposes the 17 Company API tools with read/write
+    annotations and structured output for object results."""
     try:
         from mcp.server import Server  # type: ignore
         from mcp.server.stdio import stdio_server  # type: ignore
-        from mcp.types import Tool, TextContent  # type: ignore
+        from mcp.types import Tool, TextContent, ToolAnnotations  # type: ignore
     except ImportError:
-        print("MCP mode requires the 'mcp' package: pip install mcp", file=sys.stderr)
+        print(
+            "MCP mode requires the optional 'mcp' package: pip install 'dynamitejobs[mcp]'",
+            file=sys.stderr,
+        )
         return 1
     import asyncio
 
     server = Server("dj-company")
+    specs = _mcp_tool_specs()
 
     @server.list_tools()
     async def list_tools() -> list[Tool]:
-        return [
-            Tool(name="company", description="Read company profile", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="jobs", description="List jobs (optional status filter)", inputSchema={"type": "object", "properties": {"status": {"type": "string"}, "limit": {"type": "integer"}}}),
-            Tool(name="job", description="Read one job", inputSchema={"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]}),
-            Tool(name="applications", description="List applications for a job", inputSchema={"type": "object", "properties": {"job_id": {"type": "string"}, "status": {"type": "string"}}, "required": ["job_id"]}),
-            Tool(name="application", description="Read one application", inputSchema={"type": "object", "properties": {"id": {"type": "string"}, "job_id": {"type": "string"}}, "required": ["id", "job_id"]}),
-            Tool(name="candidate", description="Read a candidate (must have applied)", inputSchema={"type": "object", "properties": {"uid": {"type": "string"}}, "required": ["uid"]}),
-            Tool(name="analytics_funnel", description="Company-wide funnel", inputSchema={"type": "object", "properties": {"from": {"type": "string"}, "to": {"type": "string"}}}),
-            Tool(name="billing_status", description="Card on file + plan tier", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="limits", description="Effective rate limits + usage", inputSchema={"type": "object", "properties": {}}),
-            Tool(name="update_application", description="Update an application's status or notes (ATS). No 'rating' field — only the 5 dashboard statuses.", inputSchema={"type": "object", "properties": {"id": {"type": "string"}, "job_id": {"type": "string"}, "status": {"type": "string", "enum": ["not-reviewed", "good-fit", "interested", "declined", "filtered"]}, "candidate_notes_text": {"type": "string"}, "candidate_notes_html": {"type": "string"}}, "required": ["id", "job_id"]}),
-        ]
+        tools = []
+        for name, spec in specs.items():
+            desc = spec["description"]
+            if spec["command"] in _WRITE_COMMANDS:
+                desc += "\n\n⚠️ Write operation: mutates your DJ company data."
+            tools.append(Tool(
+                name=name,
+                description=desc,
+                inputSchema=spec["schema"],
+                annotations=ToolAnnotations(**_tool_annotations(spec["command"])),
+            ))
+        return tools
 
     @server.call_tool()
-    async def call_tool(name: str, args: dict) -> list[TextContent]:
-        dj = DJ()
-        result: Any
-        if name == "company": result = dj.company()
-        elif name == "jobs": result = dj.jobs(status=args.get("status"), limit=args.get("limit", 25))
-        elif name == "job": result = dj.job(args["id"])
-        elif name == "applications": result = dj.applications(args["job_id"], status=args.get("status"))
-        elif name == "application": result = dj.application(args["id"], job_id=args["job_id"])
-        elif name == "candidate": result = dj.candidate(args["uid"])
-        elif name == "analytics_funnel": result = dj.analytics_funnel(from_=args.get("from"), to=args.get("to"))
-        elif name == "billing_status": result = dj.billing_status()
-        elif name == "limits": result = dj.limits()
-        elif name == "update_application":
-            result = dj.update_application(
-                args["id"], job_id=args["job_id"],
-                status=args.get("status"),
-                candidate_notes_text=args.get("candidate_notes_text"),
-                candidate_notes_html=args.get("candidate_notes_html"),
-            )
-        else:
-            result = {"error": f"unknown tool {name}"}
-        return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
+    async def call_tool(name: str, args: dict):
+        spec = specs.get(name)
+        if not spec:
+            return [TextContent(type="text", text=json.dumps({"error": f"unknown tool {name}"}))]
+        try:
+            dj = DJ()
+            result = spec["handler"](dj, dict(args or {}))
+        except DJError as e:
+            return [TextContent(type="text", text=json.dumps(
+                {"error": "http_error", "status": e.status, "body": e.body}, default=str))]
+        except Exception as e:
+            return [TextContent(type="text", text=json.dumps({"error": str(e)}, default=str))]
 
-    async def main() -> None:
+        payload = json.dumps(result, indent=2, default=str) if isinstance(result, (dict, list)) \
+            else (str(result) if result is not None else "")
+        content = [TextContent(type="text", text=payload)]
+        # Object results are also returned as structuredContent so
+        # structure-aware clients can consume them without re-parsing the text.
+        # (Lists/scalars stay text-only — the SDK's structured channel expects
+        # an object.) Returning a 2-tuple is the SDK's combined-content contract.
+        if isinstance(result, dict):
+            return content, result
+        return content
+
+    async def _main() -> None:
         async with stdio_server() as (read, write):
             await server.run(read, write, server.create_initialization_options())
 
-    asyncio.run(main())
+    try:
+        asyncio.run(_main())
+    except KeyboardInterrupt:
+        pass
     return 0
 
 
@@ -550,6 +800,7 @@ def main() -> int:
         return 0
     if args.verb == "setup": return cmd_setup(args)
     if args.verb == "self-test": return cmd_self_test(args)
+    if args.verb == "workflows": return cmd_workflows(args)
     return cmd_call(args)
 
 

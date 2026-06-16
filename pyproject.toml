@@ -4,7 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dynamitejobs"
-version = "1.1.0"
+# Version is read at build time from the VERSION constant in py/dj.py so it is
+# the single source of truth for the wheel metadata. The non-package mirrors
+# (manifest.json, server.json, py/config.json) are hand-maintained copies — the
+# CI guard in tests/test_version_sync.py fails the build if any drifts from
+# VERSION, keeping all of them in lockstep.
+dynamic = ["version"]
 description = "Official Python client for the public Dynamite Jobs Company API — post remote jobs, manage applications, score candidates, pull funnel analytics. CLI, library, Agent Skill, and MCP server in one file."
 readme = "README.md"
 license = { text = "MIT" }
@@ -40,7 +45,12 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
+# `pip install dynamitejobs[mcp]` enables --mcp server mode. CLI / library use
+# needs nothing beyond the stdlib.
 mcp = ["mcp>=0.9"]
+# `pip install dynamitejobs[test]` for the offline test suite (dev only —
+# tests/ is excluded from the wheel + sdist).
+test = ["pytest>=7.0"]
 
 [project.urls]
 Homepage = "https://github.com/dynamitejobs/dj"
@@ -57,8 +67,20 @@ OpenAPI = "https://api.dynamitejobs.com/openapi.json"
 [project.scripts]
 dj = "dynamitejobs.dj:main"
 
+[tool.hatch.version]
+# Read VERSION = "1.1.0" out of py/dj.py at build time — single source of truth.
+path = "py/dj.py"
+pattern = "VERSION\\s*=\\s*['\"](?P<version>[^'\"]+)['\"]"
+
 [tool.hatch.build.targets.wheel]
 packages = ["py"]
 
 [tool.hatch.build.targets.wheel.sources]
 "py" = "dynamitejobs"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# NB: we deliberately do NOT set `pythonpath = ["py"]`. The client ships as a
+# package (py/__init__.py), so putting py/ on sys.path would shadow pytest's
+# own legacy `py` dependency. conftest.py loads py/dj.py by file path instead.

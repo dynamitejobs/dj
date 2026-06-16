@@ -1,0 +1,38 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dynamitejobs/dj",
+  "title": "DJ Company API",
+  "description": "Read and act on your own Dynamite Jobs company data via the public DJ Company API — jobs, applications, candidates, analytics, billing.",
+  "repository": {
+    "url": "https://github.com/dynamitejobs/dj",
+    "source": "github"
+  },
+  "version": "1.1.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.dynamitejobs.com/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "dynamitejobs",
+      "version": "1.1.0",
+      "transport": { "type": "stdio" },
+      "runtimeHint": "python",
+      "runtimeArguments": [
+        { "type": "named", "name": "-m", "value": "dynamitejobs", "isRequired": true },
+        { "type": "positional", "value": "--mcp", "isRequired": true }
+      ],
+      "environmentVariables": [
+        {
+          "name": "DJ_API_KEY",
+          "description": "Your DJ Company API key (dj_<companyID>_<random>). Generate from the DJ dashboard → Settings → API Access.",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
