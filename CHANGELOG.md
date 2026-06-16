@@ -16,7 +16,7 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ## [1.2.2] – 2026-06-17
 
-Aligned with DJ Company API server `1.2.0`, which adds a hosted MCP server and OAuth.
+Aligned with DJ Company API server `1.2.2`, which adds a hosted MCP server and OAuth.
 
 ### Added
 
