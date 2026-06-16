@@ -14,6 +14,27 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.2.2] – 2026-06-17
+
+Aligned with DJ Company API server `1.2.0`, which adds a hosted MCP server and OAuth.
+
+### Added
+
+- Hosted remote MCP is now live — `server.json` advertises the `streamable-http` endpoint at `https://api.dynamitejobs.com/mcp` (use it directly, no install). The bundled stdio server (`dj --mcp`) remains for local/offline use.
+- MCP tool annotations (`readOnlyHint`/`destructiveHint`) + structured output on all 17 tools.
+- `workflows` command — fetches the server's machine-readable recipe list.
+- `tests/` version-sync + annotation-drift guards; `.mcpbignore` for the bundle.
+
+### Changed
+
+- `SKILL.md` expanded (hosted-vs-local guidance, OAuth, discovery, pagination, verb-grouped commands, rate-limit tiers).
+- `manifest.json` to MCP-bundle 0.3 (`user_config` prompt for `DJ_API_KEY`, platform/runtime compatibility).
+- `pyproject.toml` reads the package version dynamically from `py/dj.py`.
+
+### Fixed
+
+- `candidate` called the wrong path (`/candidates/{uid}` → `/candidate/{uid}`).
+
 ## [1.1.0] – 2026-06-13
 
 ### Changed

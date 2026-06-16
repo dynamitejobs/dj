@@ -30,7 +30,7 @@ from urllib import error, parse, request
 # ──────────────────────────────────────────────────────────────────────────────
 # Version + defaults
 
-VERSION = "1.1.0"
+VERSION = "1.2.2"
 DEFAULT_BASE_URL = "https://api.dynamitejobs.com"
 ENV_FILE = Path.home() / ".env.dj"
 ENV_KEY = "DJ_API_KEY"

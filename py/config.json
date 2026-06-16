@@ -1,6 +1,6 @@
 {
   "name": "dynamitejobs",
-  "version": "1.1.0",
+  "version": "1.2.2",
   "description": "Dynamite Jobs Company API client — jobs, applications, candidates, analytics, billing.",
   "env_required": ["DJ_API_KEY"],
   "env_optional": ["DJ_API_BASE_URL"],
