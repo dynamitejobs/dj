@@ -7,7 +7,7 @@
     "url": "https://github.com/dynamitejobs/dj",
     "source": "github"
   },
-  "version": "1.2.2",
+  "version": "1.2.5",
   "remotes": [
     {
       "type": "streamable-http",
@@ -18,7 +18,7 @@
     {
       "registryType": "pypi",
       "identifier": "dynamitejobs",
-      "version": "1.2.2",
+      "version": "1.2.5",
       "transport": { "type": "stdio" },
       "runtimeHint": "python",
       "runtimeArguments": [

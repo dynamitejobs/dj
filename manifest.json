@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "dj",
   "display_name": "DJ Company API",
-  "version": "1.2.2",
+  "version": "1.2.5",
   "description": "Official Python client for the Dynamite Jobs Company API — post remote jobs, manage applications, score candidates, pull analytics.",
   "long_description": "Official Python client for the public Dynamite Jobs Company API at https://api.dynamitejobs.com. Single self-contained file with zero runtime dependencies — runs four ways: Agent Skill (auto-discovered via SKILL.md), CLI, Python library, and MCP server (--mcp flag, opt-in mcp dependency). Compatible with Claude Code, Claude Desktop, Codex CLI, Gemini CLI, Cursor, GitHub Copilot, and any other Agent Skills / MCP-compatible tool. Covers company profile (read+update), jobs (CRUD + trial + publish + repromote), applications (read + status updates + notes + filtered pile), candidates (scoped to your jobs), analytics (jobs/funnel/sources), billing status, and rate-limit introspection. Dynamite Jobs (https://dynamitejobs.com) is the remote-first job board for companies that hire from anywhere — running since 2017 and grown out of the Dynamite Circle founder community.",
   "author": {

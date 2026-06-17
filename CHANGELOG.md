@@ -14,6 +14,14 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [1.2.5] – 2026-06-17
+
+Aligned with DJ Company API server `1.2.5`, a fix-forward release for hosted MCP auth and connector discovery.
+
+### Fixed
+
+- Hosted MCP connector setup now aligns with the server's OAuth/resource challenge and unauthenticated discovery behavior. No Python API method or response-shape changes.
+
 ## [1.2.2] – 2026-06-17
 
 Aligned with DJ Company API server `1.2.2`, which adds a hosted MCP server and OAuth.
