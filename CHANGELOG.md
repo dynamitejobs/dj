@@ -14,6 +14,13 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [v1.2.2] - 2026-06-17
+
+### Added
+
+- catch up to DC client — hosted MCP (server.json remote), expanded SKILL.md, MCP tool annotations + structured output, workflows cmd, version-sync + annotations tests, .mcpbignore (4708047)
+
+
 ## [v1.0.9] - 2026-06-02
 
 _No customer-facing changes in this release._
