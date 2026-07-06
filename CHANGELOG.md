@@ -14,6 +14,11 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [v1.0.0] - 2026-05-20
+
+_No customer-facing changes in this release._
+
+
 ## [1.2.5] – 2026-06-17
 
 Aligned with DJ Company API server `1.2.5`, a fix-forward release for hosted MCP auth and connector discovery.
