@@ -14,6 +14,11 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [v1.0.9] - 2026-06-02
+
+_No customer-facing changes in this release._
+
+
 ## [v1.0.8] - 2026-06-01
 
 ### Fixed
