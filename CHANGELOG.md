@@ -14,6 +14,13 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [v1.0.8] - 2026-06-01
+
+### Fixed
+
+- drop non-existent rating field from update_application + add notes to MCP tool (5e34b2a)
+
+
 ## [v1.0.5] - 2026-05-27
 
 _No customer-facing changes in this release._
