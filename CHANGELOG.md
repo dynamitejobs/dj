@@ -14,6 +14,10 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [v1.2.9] - 2026-07-30
+
+_No Python API changes in this release. Aligned with DJ Company API server `1.2.9`, which rejects blank job draft creates before saving._
+
 ## [v1.2.5] - 2026-06-18
 
 _No customer-facing changes in this release._
