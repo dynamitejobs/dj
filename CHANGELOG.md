@@ -14,6 +14,23 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [v1.2.11] - 2026-10-02
+
+_No Python API changes in this release. Aligned with DJ Company API server `1.2.11`._
+
+Server-side, covering the two releases since this client last tracked `1.2.9`:
+
+- `1.2.11` — `create_job`, `create_trial_job` and `update_job` now return
+  `400 escaped_description_html` when `descriptionHTML` arrives with its markup
+  HTML-escaped end to end (`&lt;p&gt;…&lt;/p&gt;` with no real tag anywhere).
+  A job stored that way printed its own tags as text on the public page. The
+  check is conservative — it needs 500+ characters, no real tags at all, and at
+  least four escaped ones making up a tenth of the text — so a description that
+  merely quotes markup in prose is unaffected. Send real HTML tags, not entities.
+- `1.2.10` — job writes now normalize shorthand taxonomy values (`"full-time"`,
+  `"marketing"`, `"canada"` → `"CA"`, bare `skillSlugs` → `skills[]`) and reject
+  unmappable ones with the valid options, instead of storing them as sent.
+
 ## [v1.2.9] - 2026-07-30
 
 _No Python API changes in this release. Aligned with DJ Company API server `1.2.9`, which rejects blank job draft creates before saving._
