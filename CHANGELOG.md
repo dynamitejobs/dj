@@ -14,6 +14,30 @@ the public Python API surface (`dynamitejobs.DJ`, `dynamitejobs.DJError`,
 
 ---
 
+## [v1.2.12] - 2026-10-07
+
+_No Python API changes in this release. Aligned with DJ Company API server `1.2.12`._
+
+Server-side, affecting `create_job`, `create_trial_job` and `update_job` when you
+send a `form`:
+
+- The apply-form question **ID decides its `fieldType`**, not the value you send:
+  `location` only on `default-question-location`, `salary` only on
+  `default-question-salary`, `linkedin` only on `default-question-linkedin`, and
+  `text` on every other id. Anything else now returns
+  `400 invalid_form_field_type`. `text` is a full multi-line auto-resizing box,
+  so long-form answers lose nothing by using it.
+  Why it is rejected: an unrecognised value such as `textarea` rendered a label
+  above an empty box, and those questions are usually `required`, so the apply
+  form demanded an answer the candidate could not enter and the job could not be
+  applied to at all. A built-in type on a *custom* question id fails the same way
+  but is harder to spot — those three renderers write their answer under their
+  own fixed id, so your question's answer stays empty behind an input that looks
+  filled in.
+- Sending a question as `null` now **removes** it. Previously the null was stored
+  as a value, and because the apply page orders questions by `order`, a single
+  stored null broke the entire apply form rather than one field.
+
 ## [v1.2.11] - 2026-10-02
 
 _No Python API changes in this release. Aligned with DJ Company API server `1.2.11`._
